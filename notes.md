@@ -292,3 +292,199 @@ binexpiter(a, binexpiter(b,c,phi(m)), m);
 ```
 
 ### ep 57 (factors and divisors)
+
+first we have brute force approach. which is just run a for loop and find count, sum of div. this is O(N).
+
+then we have a better approach pf O(n^0.5) which leverages the fact that n1 * n2 will always have one of them less than =(n)^0.5 and other more =.
+
+```cpp
+for(int i = 1; i*i <= n; i++){
+	if (n%i == 0){
+		if (i*i != n){
+			int div1 = i;
+			int div2 = n/i;
+			// sum  += div1 + div2;
+			//cnt += 2;
+		}
+		else{
+			int div = i;
+			//cnt++;
+			sum += div;
+		}
+	}
+}
+```
+
+then we study the formulas for prod and sum of div which we did in jee.using these formulas we can find sum and count even faster than O(N^0.5) given we have a optimised algorithm to find prime factorisation (which we do).
+
+### ep 58 prime check and prime factorisation
+
+condition of a prime no is it must have only 2 divisors, so we can write a brute force O(root N) using above which checks for prime.
+
+smallest divisor(> 1) of a number exceeding 1 is always a prime. we can use this fact to compute prime factorisation
+
+
+below is O(N) implementation of it.
+```cpp
+vector<int> prime_fact;
+for (int i = 2; i <= n; i++){
+	if (n %i == 0){ //this is the smallest divisor and hence prime
+		while (n %i == 0){
+			prime_fact.push_back(i);
+			n /= i;
+		}
+	}
+}
+```
+
+we can optimise this approach by using the fact that if we run till root N, it will still cover all primes except for maybe 1 which can be handled separately.
+(dont know how this works tbh will see it later)
+```cpp
+vector<int> prime_fact;
+for (int i = 2; i*i <= n; i++){
+	if (n %i == 0){ //this is the smallest divisor and hence prime
+		while (n %i == 0){
+			prime_fact.push_back(i);
+			n /= i;
+		}
+	}
+}
+if (n > 1){
+ // one prime left
+	prime_fact.push_back(n);
+}
+```
+
+### ep 59 sieve algorithm
+
+it is an algorithm that computes prime by writing all numbers from 2 to n then assumes all of them are prime. then for each prime number it goes to its multiple and unmark it as prime. this happens till n is reached. 
+```cpp
+const int n = 1e7 + 10;
+vector<bool> isPrime(n,1); //all tru by default
+
+int main(){
+	isPrime[0] = isPrime[1] = false; //0 and 1 r not prime
+	for (int i = 2; i < n; i++){
+		if (isPrime[i] == true){
+			for (int j = 2*i; j < n; j+= i){
+				isPrime[j] = false;
+			}
+		}
+	}
+}
+
+```
+
+time complexity of above code is N log log N proof can be found in cses handbook.
+
+### ep 60 sieve variation for number theory problems
+
+first variation which we consider is computing lowest and highest prime of a number .
+```cpp
+const int n = 1e7 + 10;
+vector<bool> isPrime(n,1); //all tru by default
+vector<bool> lp(n, 0);
+vector<bool> hp(n, 0);
+int main(){
+	isPrime[0] = isPrime[1] = false; //0 and 1 r not prime
+	for (int i = 2; i < n; i++){
+		if (isPrime[i] == true){
+			lp[i] = hp[i] = i;
+			for (int j = 2*i; j < n; j+= i){
+				isPrime[j] = false;
+				hp[j] = i;
+				if (lp[j] == 0){
+					lp[j] = i;
+				}
+			}
+		}
+	}
+}
+
+```
+
+now using above variation we can  compute prime factorisation of any number in logN which is quite fast.
+```cpp
+const int n = 1e7 + 10;
+vector<bool> isPrime(n,1); //all tru by default
+vector<bool> lp(n, 0);
+vector<bool> hp(n, 0);
+int main(){
+	isPrime[0] = isPrime[1] = false; //0 and 1 r not prime
+	for (int i = 2; i < n; i++){
+		if (isPrime[i] == true){
+			lp[i] = hp[i] = i;
+			for (int j = 2*i; j < n; j+= i){
+				isPrime[j] = false;
+				hp[j] = i;
+				if (lp[j] == 0){
+					lp[j] = i;
+				}
+			}
+		}
+	}
+
+	// we can use either lp or hp for this purpose.
+	int num;
+	cin >> num;
+	vector<int> pfs;
+	while(num > 1){
+		int pf = hp[num];
+		while(num % pf == 0){
+			pfs.push_back(pf);
+			num /= pf;
+		}
+	}
+}
+
+```
+
+we can also use sieve to compute all divisors of a num. time complexity of this code is O(NlogN)
+```cpp
+vector<int> divisors[n]; // stores divisors of number from 1 to n
+for (int i = 1; i < n; i++){
+	for (int j = i; j < n; j+= i){
+		divisors[j].push_back(i);
+	}
+}
+```
+u can also store sum in above by doing ``` sum[j] +=i ``` and so on we can have infinite ideas.
+
+### ep 61 modular inverse
+
+``` (a/b) % M = (a * inv(b)) % M = ((a % M) * (inv(b) % M))%M ``` where inv(b) % M is called modular inverse of a wrt M which is defined as when ```(a * b ) % M = 1```. note this is only defined when a and M are coprime.
+
+we can find this inverse by running a for loop of values of b from 0 to M-1, and select the one which follows all above conditions. obv this would work only when M is not large.
+
+if M is large there is an optimised approach given by fermats little theorm which says
+``` inv of a wrt M is (a^(M-2) % M) ``` assuming M is prime and **a is not a multiple of M**. notice how this computes inverse in logM (by binary exp) which is very good.
+
+**Ques: compute nCk mod M both n,k ~ 1e6, M = 1e9 + 7, queries ~1e5**
+
+```cpp
+const int M = 1e9 + 7;
+const int N = 1e6 + 10;
+int fact[N]; // we precompute the factorials because of queries
+
+int main(){
+	fac[0] =1;
+	for(int i =1; i < N; i++){
+		fact[i] = (fact[i-1]*1LL*i) % M;
+	}
+	int q;
+	cin >> q;
+	while(q--){
+		int n, k;
+		cin >> n >> k;
+
+		int denominator = fact[n-k] * 1LL * fact[k];
+		int ans = fact[n] * (binexpiter(denominator, M-2, M));
+		cout << ans << endl;
+	}
+}
+```
+
+### ep 62 hackerearth unlock the door question
+had already done. basically exactly same as above question just more terms.
+
+### ep 63 sieve fundamental questions
