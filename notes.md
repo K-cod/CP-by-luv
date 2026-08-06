@@ -701,3 +701,185 @@ signed main(){
 ```
 
 ### EP 66 inclusion exclusion
+
+hacker earth : 3 musketeers
+
+***THERES A SMALL BUG IN THIS NEED FIXING***
+```cpp
+
+#include<bits/stdc++.h>
+using namespace std;
+
+bool isVowel(char c){
+	return c=='a' || c == 'e' || c == 'i' || c == 'o' || c=='u';
+}
+
+vector<string> subsets(string s){
+	vector<string> ans;
+	for (int mask = 0; mask < (1 << s.size()); ++mask)
+ 		{
+ 			string s = "";
+ 			for (int j = 0; j < s.size(); ++j)
+ 			{
+ 				if (mask & (1 << j)){
+ 					s.push_back(s[j]);
+ 				}
+ 			}
+ 			if (s.size()) ans.push_back(s);
+ 			
+ 		}
+ 	return ans;
+}
+signed main(){
+ ios_base::sync_with_stdio(0);
+ cin.tie(0);cout.tie(0);
+ int t;
+ cin >> t;
+ while(t--){
+ 	int n;
+ 	cin >> n;
+ 	string comb[n];
+ 	for (int i = 0; i < n; ++i)
+ 	{
+ 		cin >> comb[i];
+ 	}
+ 	unordered_map<string, int> hsh;
+ 	for (int i = 0; i < n; ++i)
+ 	{
+ 		set<char> vowels;
+ 		for (char c : comb[i]){
+ 			if (isVowel(c)){
+ 				vowels.insert(c);
+ 			}
+ 		}
+ 		string svowels;
+ 		for (char c : vowels){
+ 			svowels.push_back(c);
+ 		}
+ 		// now we need to generate all subsets of this string and inc their count. (as aio means a,i,o.. all there)
+
+ 		vector<string> all_subsets = subsets(svowels);
+ 		for(string s : all_subsets){
+ 			hsh[s]++;
+ 		}
+ 	}
+ 	long long ans = 0;
+ 	for (auto &pair : hsh){
+ 		if (pair.second < 3){
+ 			continue;
+ 		}
+ 		
+ 		long long ct = pair.second;
+ 		long long ways = ct * (ct -1 ) * (ct - 2) / 6;
+ 		if (pair.first.size() & 1){
+ 			ans += ways;
+ 		}
+ 		else{
+ 			ans -= ways;
+ 		}	
+ 		
+ 		
+ 	}
+ 	cout << ans << endl;
+ }
+ return 0;
+}
+  
+```
+
+### EP 68 explaining graph/tree terminologies
+
+graph is just collection of edges and vertices.
+
+directed and non directed edges.
+
+trees are graphs where there are no cycles.
+
+trees always have n-1 edges with n nodes. (any more edges will lead to cycles). (for undirected graphs)
+
+connected components.(for undirected graphs) below figure contains 2 connected components
+![fig 2 cc](image-2.png)
+
+directed cyclic and acyclic graphs. below is example of acyclic directed graph
+
+![ fig acyclic directed graph](image-3.png)
+
+strongly connected components (SCC) in dircted graphs. see below example with 6 scc
+
+![fig shows 6 SCC ](image.png)
+
+below figure contains 4 scc
+![fig 4 scc](image-1.png)
+
+a forest is a collection of 1 or more disjoint trees.
+
+a leaf node in trees is one with no children.
+
+root node is where all children come from.
+
+depth is distance of a node from root node (in terms of edges obv) 
+![fig hieght&depth](image-4.png)
+
+above img has height of node 2 as 1, node 5,6,7 as 2
+
+height of node is its largest distance from leaf node.
+
+LCA (lowest common ancestor) of 8,7 in above figure is node 3. simi node 5,7 have lca as 1.
+
+### EP 69 representing graphs and trees in code
+
+**1 ) adjacency matrix**
+make v*v matrix and fill connected vertices as 1. ij means i is connected to j btw
+![fig adj matrix](image-5.png)
+
+for showing a weighted graph just put weight instead of 1
+![fig weight adj matrix](image-6.png)
+
+usually inputs in grpahs are given by vertices, edges in one line then all the connections are given in remaining lines.
+
+if weight is also given  along with v1,v2 just use it and store it instead of storing 1.
+![fig code](image-7.png)
+the above graph looks like below
+
+![fig output](image-8.png)
+
+**problems associated**
+
+ with this approach is its massive space complexity.
+
+**benefits of using**
+
+ this is we find weights and connectivity using O(1) compared to finding connectivity using O(n) in list (but wts is O(1) for both)
+
+
+**2 ) adjacency list**
+
+here for v vertices we create v different lists where list i shows to what nodes is the node i connected to. the space complexity of this is roughly O(V + E)
+```cpp
+//asuming same input as above code
+vector<int> graph[N];
+int v, e;
+cin >> v >> e;
+for (int i = 0; i < e; i++){
+	int v1, v2;
+	cin >> v1 >> v2;
+	graph[v1].push_back(v2);
+	graoh[v2].push_back(v1);
+	//note above is for undirected otherwise remove line
+}
+```
+now say if we are also given weights then we have to create a vector of pair instead of a int (pair of (v2, weight))
+
+```cpp
+vector<int> graph[N];
+int v, e;
+cin >> v >> e;
+for (int i = 0; i < e; i++){
+	int v1, v2, w;
+	cin >> v1 >> v2 >> w;
+	graph[v1].push_back({v2, w});
+	graoh[v2].push_back({v1, w});
+	//note above is for undirected otherwise remove line
+}
+```
+
