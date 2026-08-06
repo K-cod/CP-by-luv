@@ -487,4 +487,217 @@ int main(){
 ### ep 62 hackerearth unlock the door question
 had already done. basically exactly same as above question just more terms.
 
-### ep 63 sieve fundamental questions
+### ep 63 sieve fundamental question
+hacker earth monk and divisor conundrum
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+const int N = 2e5+10;
+int mult_cts[N]; //array that tells that ith index has array[i] elements in given array that are divisible by i
+int hsh[N];
+
+int main(){
+ ios_base::sync_with_stdio(0);
+ cin.tie(0);cout.tie(0);
+ int n;
+ cin >> n;
+
+ for (int i = 0; i < n; ++i)
+ {
+ 	int x;
+ 	cin >> x;
+ 	hsh[x]++;
+ }
+
+ for (int i = 1; i < N; ++i)
+ {
+ 	for (int j = i; j < N; j+=i)
+ 	{
+ 		mult_cts[i] += hsh[j]; // precomputes the array
+ 	
+ 	}
+ }
+ int t;
+ cin >> t;
+ while(t--){
+ 	int p, q;
+ 	cin >> p >> q;
+ 	int ans = mult_cts[p] + mult_cts[q];
+ 	long long lcm = (p * 1LL * q )/__gcd(p,q);
+ 	if (lcm < N){
+ 		ans -= mult_cts[lcm];
+ 	}
+ 	cout << ans << endl;
+
+ }
+
+
+ return 0;
+}
+  
+```
+
+### ep 64 good question involving multiple number theory concepts (including sieve)
+
+hacker earth : hacker decrypting messages
+
+***THIS CURRENTLY CONTAIN BUGS THAT NEED FIXING***
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+const int N = 2e6 + 10;
+int a[N];
+int hp[N];
+int can_remove[N];
+vector<int> pfzn(int x){
+	vector<int> ans;
+	while (x > 1){
+		int pf_ = hp[x];
+		while(x % pf_ == 0){
+			x = x/pf_;
+		}
+		ans.push_back(pf_);
+	}
+	return ans;
+}
+signed main(){
+ ios_base::sync_with_stdio(0);
+ cin.tie(0);cout.tie(0);
+ for (int i = 2; i < N; ++i)
+ {
+ 	if (hp[i] == 0){
+
+ 		for (int j = i; j < N; j+=i)
+ 		{
+ 			hp[j] = i;
+ 		}
+ 	}
+ }
+ int n, q;
+ cin >> n >> q;
+ for (int i = 0; i < n; ++i)
+ {
+ 	int no;
+ 	cin >> no;
+ 	for (long long j = no; j < N; j *= no)
+ 	{
+ 		if (j < N){
+ 			can_remove[j] = 1;
+ 		}
+ 		
+ 	}
+ }
+ while(q--){
+ 	int x;
+ 	cin >> x;
+
+ 	// we need to find prime factorisation of x, so let us create a hp array and use sieve
+ 	vector<int> pf = pfzn(x);
+ 	bool isPossible = false;
+ 	// now we need to run a n^2 for loop for iterating through our pfzn
+ 	for (int i = 0; i < pf.size(); ++i)
+ 	{
+ 		for (int j = i; j < pf.size(); ++j)
+ 		{
+ 			int product = pf[i] * pf[j];
+ 			// checking case of same prime factor
+ 			if (i == j && (x % product != 0)){
+ 				continue; //not possible
+ 			}
+ 			int to_remove = x/product;
+ 			if (can_remove[to_remove] == 1 || to_remove == 1){
+ 				isPossible = true;
+ 				break;
+ 			}
+ 			
+ 		}
+ 		if (isPossible == true){
+ 			break;
+ 		}
+ 	}
+ 	cout << (isPossible ? "YES" : "NO") << endl;
+ }
+
+ return 0;
+}
+  
+```
+
+### EP 65 Bit manipulation questions
+
+Q1) hacker earth : Monk and his father
+
+notice if u assume he goes to god for n days and in day i he recives xi from god his total after n days is `2^n * x_1 + 2^n-1 * x_2 +.. 2 * x_n w` which is binary expansion of (x1x2..xn0) notice minimum dollars we ask for is number of set bits in this. so just output the number of set bits in P.
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+signed main(){
+ ios_base::sync_with_stdio(0);
+ cin.tie(0);cout.tie(0);
+ int t;
+ cin >> t;
+ while(t--){
+ 	long long x;
+ 	cin >> x;
+ 	cout << __builtin_popcountll(x) << '\n';
+ }
+ return 0;
+}
+  
+```
+Q2) hacker earth : XOR challenge
+(good question on bitmasking)
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+signed main(){
+ ios_base::sync_with_stdio(0);
+ cin.tie(0);cout.tie(0);
+ int c;
+ cin >> c;
+ int a = 0, b = 0;
+ int n_bits = (int)(log2(c) + 1);
+ vector<int> set_bits;
+ for (int i = 0; i < n_bits; ++i)
+ {
+ 	if ((c & (1<<i)) == 0){ // ith bit is not set
+ 		a = a | (1 << i);
+ 		b = b | (1 << i);
+ 	}
+ 	else{
+ 		set_bits.push_back(i);
+ 	}
+ }
+ int sz = 1 << set_bits.size();
+ long long ans = -1;
+ for (int mask = 0; mask < sz; ++mask)
+ {
+ 	int a_cp = a;
+ 	int b_cp = b;
+ 	for (int j = 0; j < set_bits.size(); ++j)
+ 	{
+ 		if ((mask & (1 << j)) != 0){
+ 			a_cp |= (1 << set_bits[j]);
+ 		}
+ 		else{
+ 			b_cp |= (1 << set_bits[j]);
+ 		}
+ 	}
+ 	ans = max(ans, a_cp *1LL * b_cp);
+
+ }
+ cout << ans << endl;
+ 
+ return 0;
+}
+  
+```
+
+### EP 66 inclusion exclusion
