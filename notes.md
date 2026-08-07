@@ -883,3 +883,324 @@ for (int i = 0; i < e; i++){
 }
 ```
 
+### ep 70 understanding DFS
+
+the job of DFS is to travel through a graph. it starts from the root node and checks every possible child node, it recursively does this until all children are covered.
+
+![fig DFS](image-9.png)
+
+we maintain a visited array to make sure our current node knows which children are unvisited.
+
+**code for dfs:**
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+const int N = 1e5 + 10;
+bool vis[N];
+vector<int> g[N];
+
+void dfs(int vertex){
+	//action on vertex after entering the vertex
+
+	cout << vertex << endl;
+
+	vis[vertex] = true;
+	
+	for(int child : g[vertex]){
+		// action before entering child
+		if (vis[child]) continue;
+
+		dfs(child);
+		//action after entering child
+	}
+	//action before exiting the vertex
+}
+
+signed main(){
+ ios_base::sync_with_stdio(0);
+ cin.tie(0);cout.tie(0);
+ int n, m;
+ cin >> n >> m;
+ for (int i = 0; i < m; ++i)
+ {
+ 	int v1, v2;
+ 	cin >> v1 >> v2;
+ 	g[v1].push_back(v2);
+ 	g[v2].push_back(v1);
+ }
+ dfs(0);
+ return 0;
+}
+  
+
+```
+
+**time complexity of this is O(E + V)**
+explanation:
+![fig exp DFS](image-10.png)
+
+### ep 71 two imp applicaion of DFS
+
+Q1) hacker earth : connected components in a graph
+
+we simply have to compute dfs on all nodes one by one, it will only do it on unvisited nodes. then we simply see the count.
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+const int N = 1e5 + 10;
+bool vis[N];
+vector<int> g[N];
+
+void dfs(int vertex){
+	//action on vertex after entering the vertex
+	vis[vertex] = true;
+	
+	for(int child : g[vertex]){
+		// action before entering child
+		if (vis[child]) continue;
+
+		dfs(child);
+		//action after entering child
+	}
+	//action before exiting the vertex
+}
+
+signed main(){
+ ios_base::sync_with_stdio(0);
+ cin.tie(0);cout.tie(0);
+ int n, m;
+ cin >> n >> m;
+ for (int i = 0; i < m; ++i)
+ {
+ 	int v1, v2;
+ 	cin >> v1 >> v2;
+ 	g[v1].push_back(v2);
+ 	g[v2].push_back(v1);
+ }
+ int count = 0;
+ for (int i = 1; i <= n; ++i)
+ {
+ 	if (vis[i]) continue;
+ 	dfs(i);
+ 	count++;
+ }
+ cout << count << endl;
+ return 0;
+}
+  
+```
+
+let us now figure out how to actually store these connected components
+
+
+it is trivial tbf, as one dfs will always go through 1 fully connected part, so we use this fact and then just count.
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+const int N = 1e5 + 10;
+bool vis[N];
+vector<int> g[N];
+vector<vector<int>> ccs;
+vector<int> curr_cc;
+
+void dfs(int vertex){
+	//action on vertex after entering the vertex
+	vis[vertex] = true;
+	curr_cc.push_back(vertex);
+
+
+	for(int child : g[vertex]){
+		// action before entering child
+		if (vis[child]) continue;
+
+		dfs(child);
+		//action after entering child
+	}
+	//action before exiting the vertex
+}
+
+signed main(){
+ ios_base::sync_with_stdio(0);
+ cin.tie(0);cout.tie(0);
+ int n, m;
+ cin >> n >> m;
+ for (int i = 0; i < m; ++i)
+ {
+ 	int v1, v2;
+ 	cin >> v1 >> v2;
+ 	g[v1].push_back(v2);
+ 	g[v2].push_back(v1);
+ }
+ int count = 0;
+ for (int i = 1; i <= n; ++i)
+ {
+ 	if (vis[i]) continue;
+ 	curr_cc.clear();
+ 	dfs(i);
+ 	ccs.push_back(curr_cc);
+ 	count++;
+ }
+ for(auto cc : ccs){
+ 	for (auto elem : cc){
+ 		cout << elem << " ";
+ 	}
+ 	cout << endl;
+ }
+ return 0;
+}
+  
+```
+
+now we will check how to check whether a graph is cyclic or no, notice that if u apply dfs to a cylic graph it will always come to a node where its one child will be already visited (obv excluding the one we just came from )
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+const int N = 1e5 + 10;
+bool vis[N];
+vector<int> g[N];
+
+bool dfs(int vertex, int parent){
+	//action on vertex after entering the vertex
+	vis[vertex] = true;
+	bool ans = false;
+	for(int child : g[vertex]){
+		// action before entering child
+		if (vis[child] == true && child == parent) continue;
+		if (vis[child]) return true;
+
+		ans |= dfs(child, vertex);
+		//action after entering child
+	}
+	return ans;
+	//action before exiting the vertex
+}
+
+signed main(){
+ ios_base::sync_with_stdio(0);
+ cin.tie(0);cout.tie(0);
+ int n, m;
+ cin >> n >> m;
+ for (int i = 0; i < m; ++i)
+ {
+ 	int v1, v2;
+ 	cin >> v1 >> v2;
+ 	g[v1].push_back(v2);
+ 	g[v2].push_back(v1);
+ }
+ 
+ bool ans = false;
+ for (int i = 1; i < n; i++){
+	if (vis[i]) continue;
+	if (dfs(i,0)){
+		ans = true;
+		break;
+	}
+ }
+ cout << ans << endl;
+ return 0;
+}
+```
+
+### ep 72 solving graph matrix problems
+
+leetcode : flood fill
+
+we will convert this interconnected pixels to a graph then perform DFS to convert all of them to 2.
+
+![fig matrix to graph](image-11.png)
+
+```cpp
+
+class Solution {
+public:
+    void dfs(int i, int j, int initial_color, int color,
+             vector<vector<int>>& image) {
+        int n = image.size();
+        int m = image[0].size();
+        if (i < 0 || j < 0) return;
+        if (i >= n || j >= m) return;
+        if (image[i][j] != initial_color) return;
+
+        image[i][j] = color;
+
+        dfs(i - 1, j, initial_color, color, image);
+        dfs(i, j - 1, initial_color, color, image);
+        dfs(i + 1, j, initial_color, color, image);
+        dfs(i, j + 1, initial_color, color, image);
+    }
+
+    vector<vector<int>> floodFill(vector<vector<int>>& image, int sr, int sc,
+                                  int color) {
+        int initial_color = image[sr][sc];
+        if (initial_color != color)
+            dfs(sr, sc, initial_color, color, image);
+        return image;
+    }
+};
+```
+
+now we have a homework : leetcode 200, number of islands.
+
+*left to do*
+
+```cpp
+
+```
+
+### ep 73 DFS in a tree
+
+for using dfs in trees, we can remove the visited array for optimising our code. we will instead pass it 2 variables (vertex, parent)
+
+now our aim is to find height and depth of each node.
+
+we will use the following mechanism
+![fig dfs in trees](image-12.png)
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+const int N = 1e5 + 10;
+vector<int> g[N];
+int depth[N];
+int height[N];
+
+void dfs(int vertex, int par){
+	//action on vertex after entering the vertex
+	
+	for(int child : g[vertex]){
+		// action before entering child
+		if (child == par) continue;
+		depth[child] = depth[vertex] + 1;
+		dfs(child, vertex);
+		//action after entering child
+		height[vertex] = max(height[vertex], height[child] + 1);
+	}
+	//action before exiting the vertex
+}
+
+
+signed main(){
+ ios_base::sync_with_stdio(0);
+ cin.tie(0);cout.tie(0);
+ int n;
+ cin >> n;
+ for (int i = 0; i < n-1; ++i) // n-1 edges
+ {
+ 	int v1, v2;
+ 	cin >> v1 >> v2;
+ 	g[v1].push_back(v2);
+ 	g[v2].push_back(v1);
+ }
+ dfs(1,0);
+ for (int i = 1; i <= n; ++i)
+ {
+ 	cout << depth[i] << " " << height[i] << endl;
+ }
+
+ return 0;
+}
+
+```
