@@ -1204,3 +1204,456 @@ signed main(){
 }
 
 ```
+
+### ep 74 precomputation using DFS, questions related to subtrees
+
+these precomputations are also done when going up the tree (during dfs)
+
+let us do this ques. we assume value of vertex is its node only (but if its not a value array will be given)
+![fig Q ep 74](image-13.png)
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+const int N = 1e5 + 10;
+vector<int> g[N];
+int depth[N];
+int height[N];
+int subtreesum[N];
+int evencount[N];
+
+void dfs(int vertex, int par=0){
+	//action on vertex after entering the vertex
+	subtreesum[vertex] += vertex;
+	if (!(vertex&1)){
+		evencount[vertex]++;
+	}
+	// or if value is given use val[vertex];
+	for(int child : g[vertex]){
+		// action before entering child
+		if (child == par) continue;
+		
+		dfs(child, vertex);
+		//action after entering child
+		subtreesum[vertex] += subtreesum[child];
+		evencount[vertex] += evencount[child];
+	}
+	//action before exiting the vertex
+
+
+}
+
+
+signed main(){
+ ios_base::sync_with_stdio(0);
+ cin.tie(0);cout.tie(0);
+ int n;
+ cin >> n;
+ for (int i = 0; i < n-1; ++i) // n-1 edges
+ {
+ 	int v1, v2;
+ 	cin >> v1 >> v2;
+ 	g[v1].push_back(v2);
+ 	g[v2].push_back(v1);
+ }
+ dfs(1);
+ for (int i = 1; i <= n; ++i)
+ {
+ 	cout << subtreesum[i] << ' ' << evencount[i] << endl;
+ }
+ /*
+ int q;
+ cin >> q;
+ while(q--){
+ 	// cant call dfs() here it total complexity would become Q*N which is TLEs we pre compute subtree sum
+ 	int V;
+ 	cin >> V;
+ 	cout << subtreesum[V] << ' ' << evencount[V] << endl;
+ }
+ */
+ return 0;
+}
+
+```
+
+**home work: try this without precomputations**
+
+### ep 75 finding diameter of a tree 
+
+diameter of tree is defined  as maximum number of edges between any 2 vertices them.
+
+
+there are 2 ways we can compute diameter of a tree, 1 using brute force where we consider single edge root a time and apply dfs on it to compute the max depth. we repeat this for all edges and see which one is max and thats our diameter. this is N * O(N) so N**2
+
+a smart approach is choose any root and find max depth, it is guarenteed that max depth end node is one edge of the diameter. so now we can apply dfs on that only to get our diamater. this is O(N)
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+const int N = 1e5 + 10;
+vector<int> g[N];
+int depth[N];
+int height[N];
+
+
+void dfs(int vertex, int par=-1){
+	//action on vertex after entering the vertex
+	
+	// or if value is given use val[vertex];
+	for(int child : g[vertex]){
+		// action before entering child
+		if (child == par) continue;
+
+		depth[child] = depth[vertex] + 1;
+		dfs(child, vertex);
+		//action after entering child
+		
+	}
+	//action before exiting the vertex
+
+
+}
+
+
+signed main(){
+ ios_base::sync_with_stdio(0);
+ cin.tie(0);cout.tie(0);
+ int n;
+ cin >> n;
+ for (int i = 0; i < n-1; ++i) // n-1 edges
+ {
+ 	int v1, v2;
+ 	cin >> v1 >> v2;
+ 	g[v1].push_back(v2);
+ 	g[v2].push_back(v1);
+ }
+ dfs(1);
+ int max_depth = -1;
+ int max_dnode;
+
+ for (int i = 1; i <= n; ++i)
+ {
+ 	if (depth[i] > max_depth){
+ 		max_depth = depth[i];
+ 		max_dnode = i;
+ 		
+ 	}
+ 	depth[i] = 0; //resetting the depth array as we will use it again from max root
+ }
+ dfs(max_dnode);
+ for (int i = 1; i <= n; ++i)
+ {
+ 	if (depth[i] > max_depth){
+ 		max_depth = depth[i];
+ 	}
+ }
+ cout << max_depth;
+
+ return 0;
+}
+
+
+```
+
+### EP 76 finding LCA of 2 nodes in a tree
+
+it is very simple we first store lowest parent for each node. then use this to construct a parent vector for any node. then simply the highest common index.
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+const int N = 1e5 + 10;
+vector<int> g[N];
+int depth[N];
+int height[N];
+
+int p[N];
+void dfs(int vertex, int par=-1){
+	//action on vertex after entering the vertex
+	p[vertex] = par;
+	// or if value is given use val[vertex];
+	for(int child : g[vertex]){
+		// action before entering child
+		if (child == par) continue;
+
+		dfs(child, vertex);
+		//action after entering child
+		
+	}
+	//action before exiting the vertex
+
+
+}
+vector<int> path(int v){
+	vector<int> ans;
+	while(v != -1){
+		ans.push_back(v);
+		v = p[v];
+	}
+	reverse(ans.begin(), ans.end());
+	return ans;
+}
+
+
+signed main(){
+ ios_base::sync_with_stdio(0);
+ cin.tie(0);cout.tie(0);
+ int n;
+ cin >> n;
+ for (int i = 0; i < n-1; ++i) // n-1 edges
+ {
+ 	int v1, v2;
+ 	cin >> v1 >> v2;
+ 	g[v1].push_back(v2);
+ 	g[v2].push_back(v1);
+ }
+ dfs(1);
+
+ int x, y;
+ cin >> x >> y;
+ vector<int> pathx = path(x);
+ vector<int> pathy = path(y);
+ int minl = min(pathx.size(), pathy.size());
+ int ans = -1;
+ for (int i = 0; i < minl; ++i)
+ {
+ 	if (pathx[i] == pathy[i]){
+ 		ans = pathx[i];
+ 		
+ 	}
+ 	else{
+ 		break;
+ 	}
+ }
+ cout << ans;
+ return 0;
+}
+
+```
+
+### ep 77 edge deletion question
+![fig ep 77 ques](image-14.png)
+we solve this question using precomputation of sum of each node subtree. then simply go through each (S[root] - S[i]) * (S[i]) to find out max
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+const int N = 1e5 + 10;
+vector<int> g[N];
+int depth[N];
+int height[N];
+int sumsubtree[N];
+int val[N];
+const int M = 1e9 + 7;
+void dfs(int vertex, int par=-1){
+	//action on vertex after entering the vertex
+	sumsubtree[vertex] = val[vertex];
+	// or if value is given use val[vertex];
+	for(int child : g[vertex]){
+		// action before entering child
+
+		if (child == par) continue;
+
+		dfs(child, vertex);
+		//action after entering child
+		sumsubtree[vertex] += sumsubtree[child];
+	}
+	//action before exiting the vertex
+
+
+}
+
+
+signed main(){
+ ios_base::sync_with_stdio(0);
+ cin.tie(0);cout.tie(0);
+ int n;
+ cin >> n;
+ for (int i = 0; i < n-1; ++i) // n-1 edges
+ {
+ 	int v1, v2;
+ 	cin >> v1 >> v2;
+ 	g[v1].push_back(v2);
+ 	g[v2].push_back(v1);
+ }
+ long long max_sum = 0;
+ dfs(1);
+ for (int i = 2; i < n; ++i)
+ {
+ 	max_sum = max(max_sum, (1LL*(sumsubtree[1] - sumsubtree[i])*(sumsubtree[i])) % M);
+ }
+ cout << max_sum;
+
+
+
+
+ return 0;
+}
+
+```
+
+### ep 78 BFS
+
+this is where u go level by level. shown ex has 1 as level 0. 5,3 as level 1 and 4,2,6 as level 2.
+![fig 78 level ex](image-15.png)
+
+notice how here we need to process the nodes which come first, and we should not proceed down until we have processed all same level nodes. so thought process is we need first come first serve which is basically an queue.
+
+so we maintain a queue and visisted array as shown:
+![fig 78 approach](image-16.png)
+
+we store same level stuff in queue everytime we reach it and when processing a node, we add its children after the same level stuff. then cross it once we done processing it.
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+const int N = 1e5 + 10;
+vector<int> g[N];
+
+int vis[N];
+const int M = 1e9 + 7;
+int level[N];
+void bfs(int source){
+	queue<int> q;
+	q.push(source);
+	vis[source] = 1;
+
+	while(!q.empty()){
+		int curr_v = q.front();
+
+		q.pop(); //removing processed node
+
+		for(auto child : g[curr_v]){
+			if(!vis[child]){
+				q.push(child);
+				vis[child] = 1;
+				level[child] = level[curr_v] + 1;
+			}
+		}
+	}
+}
+
+signed main(){
+ ios_base::sync_with_stdio(0);
+ cin.tie(0);cout.tie(0);
+ int n;
+ cin >> n;
+ for (int i = 0; i < n-1; ++i) // n-1 edges
+ {
+ 	int v1, v2;
+ 	cin >> v1 >> v2;
+ 	g[v1].push_back(v2);
+ 	g[v2].push_back(v1);
+ }
+ bfs(1);
+ for (int i = 1; i <= n; ++i)
+ {
+ 	cout << i << " : " << level[i] << endl;
+ }
+ return 0;
+}
+
+```
+
+now we see a imp thing about bfs. the level of the vertex gives us shortest path from source vertex to vertex assuming equal weight of edges.
+
+let us now observe time complexity of the bfs code:
+the  while loop runs number of node times whereas the for loop runs some 2* no of edges so O (E + V)
+
+### ep 79 shortest path using BFS
+
+https://www.spoj.com/problems/NAKANJ/
+
+we convert this problem into a graph where starting from initial position we mark every single move as an edge. (and so we complete the graph)
+
+
+**WARNINGS CODE HAS A BUG**
+```cpp
+
+#include<bits/stdc++.h>
+using namespace std;
+const int N = 1e5 + 10;
+
+int vis[8][8];
+int lev[8][8];
+const int M = 1e9 + 7;
+const int INF = 1e9 + 10;
+
+
+int getX(string s){
+	return s[0] - 'a';
+}
+int getY(string s){
+	return s[1] - '1';
+}
+bool isValid(int x, int y){
+	return x >= 0 && y >= 0 && x < 8 && y < 8;  
+}
+vector<pair<int,int>> movements = {
+	{1,2}, {2,1}, {-2, -1}, {-2, 1}, {2, -1}, {-1, -2}, {1, -2}, {-1, 2}
+
+};
+void reset(){
+	for (int i = 0; i < 8; ++i)
+	{
+		for (int j = 0; j < 8; ++j)
+		{
+			lev[i][j] = INF;
+			vis[i][j] = INF;
+		}
+	}
+}
+int bfs(string source, string dest){
+	int sx = getX(source);
+	int sy = getY(source);
+	int dx = getX(dest);
+	int dy = getY(dest);
+
+	queue<pair<int,int>> q; // since in ques, our node is an ordered pair
+	q.push({sx, sy});
+	vis[sx][sy] = 1;
+	lev[sx][sy] = 0;
+	while(!q.empty()){
+		pair<int,int> p = q.front();
+
+		q.pop();
+
+		for(auto movement : movements){
+			int childx = movement.first + p.first;
+			int childy = movement.second + p.second;
+			if (!isValid(childx, childy)) continue;
+			if (vis[childx][childy] == INF){
+				q.push({childx, childy});
+				lev[childx][childy] = lev[p.first][p.second] + 1;
+				vis[childx][childy] = 1;
+			}
+		}
+		if (lev[dx][dy] != INF){
+			break;
+		}
+
+
+
+	}
+	return lev[dx][dy];
+}
+
+signed main(){
+ ios_base::sync_with_stdio(0);
+ cin.tie(0);cout.tie(0);
+ int n;
+ cin >> n;
+ while(n--){
+ 	reset();
+ 	string s1, s2;
+ 	cin >> s1 >> s2;
+ 	cout << bfs(s1, s2) << endl;
+ }
+
+
+ 
+ return 0;
+}
+```
+
+### ep 80
