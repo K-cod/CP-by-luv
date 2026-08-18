@@ -1656,4 +1656,455 @@ signed main(){
 }
 ```
 
-### ep 80
+### ep 80 0-1 BFS
+
+recall we said u cant apply std bfs to a scenario involving unequal weights, however if we have only two possible weights (0 or 1) then we use a variation of bfs called 0-1 BFS.
+
+
+u need to see that the queue in bfs at any time always contain two levels x and x+1. (no more) we put things of high level at back of queue and low levels at front. 
+
+
+now we basically check weight of each node and whichever will be 1 will be put at back of queue and 0 will be put be at front.
+
+Q ![fig Q 80](image-17.png)
+
+we have been given the graph
+![fig given_graph 80](image-18.png)
+
+we do a smart transformation to change this problem into a shorted distance problem of undirected graph
+
+![fig transformed_graph  80](image-19.png)
+
+notice now in this directed graph we just need to find shortest weighted distance between 2 nodes (weights are only 0 or 1 so use 0,1 bfs)
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+const int N = 1e5 + 10;
+
+int n, m;
+vector<pair<int,int>> g[N]; // weighted graph so we store pair
+const int INF = 1e9 + 10;
+vector<int> lev(N, INF); //level/distance array (for some reason it is inf)
+
+int bfs(){ // will return shortest distance between 2 nodes
+	deque<int> q; //here we need to push q in front also thats why use deque
+	q.push_back(1);
+	lev[1] = 0;
+
+	while(!q.empty()){
+		int curr_v = q.front();
+		q.pop_front();
+		for (auto child : g[curr_v]){
+			int child_v = child.first;
+			int wt = child.second;
+
+			if (lev[curr_v] + wt < lev[child_v]){ // we are using level as visited array bcz each node has 2 directions to child, if we use vis array it will only process one of the direction
+				lev[child_v] = lev[curr_v] + wt;
+
+				if (wt == 1){
+					q.push_back(child_v);
+				}
+				else{
+					q.push_front(child_v);
+				}
+			}
+		}
+	}
+	return lev[n] == INF ? -1 : lev[n];
+}
+
+signed main(){
+ ios_base::sync_with_stdio(0);
+ cin.tie(0);cout.tie(0);
+
+ cin >> n >> m;
+
+ for (int i = 0; i < m; ++i)
+ {
+ 	int x, y;
+ 	cin >> x >> y;
+ 	if (x == y) continue;
+ 	g[x].push_back({y,0}); // existing node
+ 	g[y].push_back({x, 1}); //adding reverse node (transformation)
+ }
+
+ cout << bfs() << endl;
+ return 0;
+}
+
+```
+
+
+### EP 81 multi source BFS
+
+this is where u need to simultaneosly run multiple bfs from one from each source 
+![fig ex 81](image-20.png)
+
+like which will reach 6 first if we start from both 1 and 2.
+
+in such cases we will push all sources to the queue at same time at start. 
+
+
+we will be solving a question https://www.codechef.com/SNCKPB17/problems/SNSOCIAL/
+
+here we need to find max possible distance (or level) which we can reach from either of the sources. (and obv sources will be the max value among the grid)
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+const int N = 1e3 + 10;
+
+int vis[N][N];
+int lev[N][N];
+int val[N][N];
+int n, m;
+vector<pair<int,int>> movements = {
+	{0,1}, {1,0}, {-1,0}, {0,-1}, {1,1}, {-1,1}, {1,-1}, {-1,-1}
+};
+
+bool isValid(int i, int j){
+	return i>=0 && j>=0 && i < n && j < m;
+}
+
+const int INF = 1e9 + 10;
+
+int bfs(){
+	int max_val = 0;
+	int ans = 0;
+	for (int i = 0; i < n; ++i)
+ 	{
+ 		for (int j = 0; j < m; ++j)
+ 		{
+ 			max_val = max(max_val, val[i][j]);
+ 		}
+ 	}
+
+ 	queue<pair<int,int>> q;//as here instead of node, we have a coordinate
+
+ 	for (int i = 0; i < n; ++i)
+ 	{
+ 		for (int j = 0; j < m; ++j)
+ 		{
+ 			if (val[i][j] == max_val){
+ 				q.push({i,j});
+ 				lev[i][j] = 0;
+ 				vis[i][j] = 1;
+ 			}
+ 		}
+ 	}
+
+ 	while(!q.empty()){
+ 		auto v = q.front();
+ 		int v_x = v.first;
+ 		int v_y = v.second;
+ 		q.pop();
+
+ 		for (auto movement : movements){
+ 			int child_x = v_x + movement.first;
+ 			int child_y = v_y + movement.second;
+ 			if (!isValid(child_x, child_y)) continue;
+ 			if (vis[child_x][child_y]) continue;
+
+ 			q.push({child_x, child_y});
+ 			lev[child_x][child_y] = lev[v_x][v_y] + 1;
+ 			vis[child_x][child_y] = 1;
+ 			ans = max(ans, lev[child_x][child_y]);
+ 		}
+
+ 	}
+ 	return ans;
+}
+
+void reset(){
+	for (int i = 0; i < n; ++i)
+ 	{
+ 		for (int j = 0; j < m; ++j)
+ 		{
+ 			vis[i][j] = 0;
+ 			lev[i][j] = INF;
+ 		}
+ 	}
+}
+
+signed main(){
+ ios_base::sync_with_stdio(0);
+ cin.tie(0);cout.tie(0);
+ int t;
+ cin >> t;
+ while(t--){
+ 	reset();
+ 	cin >> n >> m;
+ 	for (int i = 0; i < n; ++i)
+ 	{
+ 		for (int j = 0; j < m; ++j)
+ 		{
+ 			cin >> val[i][j];
+ 		}
+ 	}
+ 	cout << bfs() << endl;
+ }
+
+
+
+ return 0;
+}
+
+
+```
+
+### ep 82 dijkstra algorithm 
+
+for solving shortest path problems when there are unequal weights.
+
+
+it is a type of greedy algorithm.
+
+essentially what we do in this is, we maintain a priorty queue/ set/ multiset, distance array (from source), a visited array.
+
+in queue this time we store a pair which is (distance, node).
+
+then starting from source, we set its dist  = 0 then when we move to its child we basically process if we can minimise distance of that node through it if yes we store the min distance in dist array. and also here in queue we move to the minimium distance present to process that node we keep repeating until all nodes are visited.
+
+![fig ex 82](image-21.png)
+
+code for it:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+
+const int N = 1e5 + 10;
+
+const int INF = 1e9 + 10;
+
+vector<pair<int, int>> g[N];
+
+
+
+void dijkstra(int source){
+	vector<int> dist(N, INF);
+	vector<int> vis(N,0);
+
+	set<pair<int,int>> st; //for storing (net distance from origin, node)
+
+	st.insert({0,source}); 
+	dist[source] = 0;
+
+	while(st.size() > 0){
+		auto node = *st.begin(); //getting the min distance from origin pair
+		int v = node.second;
+		int v_dist  = node.first;
+		st.erase(st.begin());
+		if (vis[v]) continue;
+		vis[v] = 1;
+		for (auto child : g[v]){
+			int child_v = child.first;
+			int child_wt = child.second;
+			int new_dist = dist[v] + child_wt;
+			if (new_dist < dist[child_v]){
+				dist[child_v] = new_dist;
+				st.insert({dist[child_v], child_wt});
+			}
+
+		}
+	}
+}
+
+signed main(){
+ ios_base::sync_with_stdio(0);
+ cin.tie(0);cout.tie(0);
+
+ int n, m;
+
+ cin >> n >> m;
+
+ for (int i = 0; i < m; ++i)
+ {
+ 	int x, y, wt;
+
+ 	cin >> x >> y >> wt;
+
+ 	g[x].push_back({y, wt});
+
+
+ }
+ 
+ return 0;
+}
+
+```
+
+analysing the time complexity of this code notice it is O(V + E*logV) log is due to use of sets and it is happening inside loop of E
+
+
+now u can solve leet code 743 (network delay time) it is easy once u know dijstra (HW) 
+
+### ep 83 floyd warshall algorithm (all pair shortest algorithm)
+recall if we have to find shortest dist from one vertex to remaining vertices we can simply use dijkstra.  but here we need to know every single pair of shortest dist.
+
+![fig ex 83](image-22.png)
+
+let us define this going through k vertices shortest distance ie going from i to j given we can pass through nodes 0,1...k-1. once we have this precomputed we can move on. (denote Sk)
+
+
+case 1:
+say we have S0,S1, S2....Sk-1 and Sk-1 is the shortest path possible then Sk and next terms will be same as Sk-1. so Sk-1 is ans
+
+
+case 2:
+is Sk is shorter than Sk-1 then it indicates that going through node k is COMPULSORY for shortest path
+
+we do the following calculations:
+![fig calcn 83](image-23.png)
+
+![fig formula 83](image-24.png) 
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+
+const int N = 1e5 + 10;
+
+const int INF = 1e9 + 10;
+
+int dist[N][N];
+
+
+
+signed main(){
+ ios_base::sync_with_stdio(0);
+ cin.tie(0);cout.tie(0);
+ for (int i = 0; i < N; ++i)
+ {
+ 	for (int j = 0; j < N; ++j)
+ 	{
+ 		if (i == j) dist[i][j] = 0;
+ 		else{
+ 			dist[i][j] = INF;
+ 		}
+ 		
+ 	}
+ }
+
+ int n, m;
+
+ cin >> n >> m;
+
+ for (int i = 0; i < m; ++i)
+ {
+ 	int x, y, wt;
+
+ 	cin >> x >> y >> wt;
+
+ 	dist[x][y] = wt;
+
+ }
+
+ // for k levels (0 level means nothing is allowed)
+ for (int k = 1; k <= n; ++k)
+ {
+ 	for (int i = 1; i <= n; ++i)
+ 	{
+ 		for (int j = 1; j <= n; ++j)
+ 		{
+ 			dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j]);
+ 		}
+ 	}
+ }
+
+ return 0;
+}
+
+```
+
+caution : 
+![fig imp case of floyds](image-25.png)
+
+it cant handle -ve weight cycles due to stuck in infinite loop (the more it runs the less distance gets)
+
+for -ve weights we have to add some condition to the code (otherwise it would feck up the infinity structure as min (inf, inf-a) will be inf - a which is inconvinient)
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+
+const int N = 510;
+
+
+long long dist[N][N];
+
+
+
+signed main(){
+ ios_base::sync_with_stdio(0);
+ cin.tie(0);cout.tie(0);
+ int n;
+ cin >> n;
+ for (int i = 1; i <= n; ++i)
+ {
+ 	for (int j = 1; j <= n; ++j)
+ 	{
+ 		cin >> dist[i][j];
+ 	}
+ }
+ vector<int> del_order(n);
+ for (int i = 0; i < n; ++i)
+ {
+ 	cin >> del_order[i];
+ }
+
+ reverse(del_order.begin(), del_order.end());
+ vector<long long> ans;
+ for (int k = 0; k < n; ++k)
+ {
+ 	int k_v = del_order[k]; // vertex at k level
+ 	for (int i = 1; i <= n; ++i)
+ 	{
+ 		for (int j = 1; j <= n; ++j)
+ 		{
+ 			long long new_dist = dist[i][k_v] + dist[k_v][j];
+ 			dist[i][j] = min(new_dist, dist[i][j]);
+ 		}
+ 	}
+ 	long long sum = 0;
+ 	for (int i = 0; i <= k; ++i){
+ 		for (int j = 0; j <= k; ++j)
+ 		{
+ 			sum+= dist[del_order[i]][del_order[j]];
+ 		}
+ 	}
+ 	ans.push_back(sum);
+
+ }
+ reverse(ans.begin(), ans.end());
+
+ for (auto val : ans){
+ 	cout << val << endl;
+ }
+ return 0;
+}
+
+
+```
+
+
+### EP 85 DSU (disjoint set union)
+
+it is a data structure that shows collection of stuff in groups
+![fig ex 85](image-27.png)
+
+there are 3 diff funcs in this:
+
+1. make : creates an independent node
+2. find : finds the parent node of group
+3. union : joins 2 diffn group (if not joined already)
+
+these groups are shown in form of tree.
+ex : 
+![fig funcs 85](image-28.png)
+
+when union of 2 grps is taken, their root node is added to form a single group.
