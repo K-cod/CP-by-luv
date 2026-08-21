@@ -2107,4 +2107,735 @@ these groups are shown in form of tree.
 ex : 
 ![fig funcs 85](image-28.png)
 
-when union of 2 grps is taken, their root node is added to form a single group.
+when union of 2 grps is taken, their root node is added to form a single group. 
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+const int N = 1e5 + 10;
+int parent[N];
+
+
+void make(int v){]
+	parent[v] = v; //make it independent node
+}
+int find(int v){
+	if (parent[v] == v){
+		return v;
+	}
+	return find(parent[v]);
+}
+
+
+void Union(int a, int b){
+	a = find(a); //replacing a as root a
+	b = find(b);
+	if (a != b){
+		 parent[b] = a; // not optimised see below 
+		// in general we should always connect smaller tree to bigger tree not vice versa bcz doing otherwise makes the final tree very large
+		// so we can do this by either connecting on rank (depth) or size (no of elem) this is called union by rank/size
+
+	}
+}
+
+signed main(){
+ ios_base::sync_with_stdio(0);
+ cin.tie(0);cout.tie(0);
+
+ return 0;
+}
+
+```
+
+before optimise we learn path compression:
+![fig path compression 85](image-29.png)
+right side is after calling find(7), we set all 2,3,5,7 to parent 1.
+
+so we need to implement 2 things : union by size/rank and path compression
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+const int N = 1e5 + 10;
+int parent[N];
+int size[N];
+
+void make(int v){]
+	parent[v] = v; //make it independent node
+	size[v] = 1;
+}
+int find(int v){
+	if (parent[v] == v){
+		return v;
+	}
+	return parent[v] = find(parent[v]); //path compression
+}
+
+
+void Union(int a, int b){
+	a = find(a); //replacing a as root a
+	b = find(b);
+	if (a != b){
+		if (size[a] < size[b]){
+			swap(a, b);
+		}
+		parent[b] = a; // this ensures smaller tree is added to bigger one
+		size[a] += size[b];
+	}
+}
+
+signed main(){
+ ios_base::sync_with_stdio(0);
+ cin.tie(0);cout.tie(0);
+
+ return 0;
+}
+
+```
+
+the time complexity of such a structure is O(alpha(n)) where alpha(n) is reverse ackerman function (such func dec very slowly with n) such complexity is called amortrised time complexity (ie for few instants it may very but if u avg a large number of operations it remains constant)
+
+
+### ep 86 DSU questions
+
+code monk hacker earth city and flood:
+very straight forward ques
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+const int N = 1e5 + 10;
+int parent[N];
+int siz[N];
+
+void make(int v){
+	parent[v] = v; //make it independent node
+	siz[v] = 1;
+}
+int find(int v){
+	if (parent[v] == v){
+		return v;
+	}
+	return parent[v] = find(parent[v]); //path compression
+}
+
+
+void Union(int a, int b){
+	a = find(a); //replacing a as root a
+	b = find(b);
+	if (a != b){
+		if (siz[a] < siz[b]){
+			swap(a, b);
+		}
+		parent[b] = a; // this ensures smaller tree is added to bigger one
+		siz[a] += siz[b];
+	}
+}
+
+signed main(){
+ ios_base::sync_with_stdio(0);
+ cin.tie(0);cout.tie(0);
+
+ int n, k;
+ cin >> n>> k;
+ for (int i = 1; i <= n; ++i){
+ 	make(i);
+ }
+
+ while(k--){
+ 	int u, v; //two vertices to join
+ 	cin >> u>> v;
+ 	Union(u,v);
+ }
+ int connected_ct = 0;
+ for (int i = 1; i <= n; ++i)
+ {
+ 	if (find(i) == i) connected_ct++;
+ }
+ cout << connected_ct << endl;
+ return 0;
+}
+
+
+
+```
+
+codemonk hackerearth city and campers :
+
+slightly better, here we use multiset to store sizes as we will need to efficiently compute min and max	
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+const int N = 1e5 + 10;
+int parent[N];
+int siz[N];
+multiset<int> sizes;
+void make(int v){
+	parent[v] = v; //make it independent node
+	siz[v] = 1;
+	sizes.insert(1);
+}
+int find(int v){
+	if (parent[v] == v){
+		return v;
+	}
+	return parent[v] = find(parent[v]); //path compression
+}
+
+void merge(int a, int b){ //used for handling multiset changes
+	sizes.erase(sizes.find(siz[a]));
+	sizes.erase(sizes.find(siz[b]));
+
+	sizes.insert(siz[a] + siz[b]);
+}
+void Union(int a, int b){
+	a = find(a); //replacing a as root a
+	b = find(b);
+	if (a != b){
+		if (siz[a] < siz[b]){
+			swap(a, b);
+		}
+		parent[b] = a; // this ensures smaller tree is added to bigger one
+		merge(a, b);
+		siz[a] += siz[b];
+	}
+}
+
+signed main(){
+ ios_base::sync_with_stdio(0);
+ cin.tie(0);cout.tie(0);
+
+ int n, q;
+ cin >> n>> q;
+ for (int i = 1; i <= n; ++i){
+ 	make(i);
+ }
+
+ while(q--){
+ 	int u, v; //two vertices to join
+ 	cin >> u>> v;
+ 	Union(u,v);
+ 	if (sizes.size() == 1) cout << 0 << endl;
+ 	else{
+ 		int mn = *(sizes.begin());
+ 		int mx = *(--sizes.end());
+ 		cout << mx - mn << endl;
+ 	}
+ }
+ 
+ return 0;
+}
+
+```
+
+### ep 87 kruskals algorithm for  minimum spanning tree (MST)
+
+MST is basically tree inside of a graph that has min weighted sum and it is completely connected.
+
+
+this algo is v simple, just first assume no edges among the nodes. then sort the edges. then pick lowest edge everytime and check if u can add that (if loops form then u cant) repeat this and u r done.
+
+here we use dsu for the checking of loops part.
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+const int N = 1e5 + 10;
+int parent[N];
+int siz[N];
+multiset<int> sizes;
+void make(int v){
+	parent[v] = v; //make it independent node
+	siz[v] = 1;
+	sizes.insert(1);
+}
+int find(int v){
+	if (parent[v] == v){
+		return v;
+	}
+	return parent[v] = find(parent[v]); //path compression
+}
+
+void merge(int a, int b){ //used for handling multiset changes
+	sizes.erase(sizes.find(siz[a]));
+	sizes.erase(sizes.find(siz[b]));
+
+	sizes.insert(siz[a] + siz[b]);
+}
+void Union(int a, int b){
+	a = find(a); //replacing a as root a
+	b = find(b);
+	if (a != b){
+		if (siz[a] < siz[b]){
+			swap(a, b);
+		}
+		parent[b] = a; // this ensures smaller tree is added to bigger one
+		merge(a, b);
+		siz[a] += siz[b];
+	}
+}
+
+signed main(){
+ ios_base::sync_with_stdio(0);
+ cin.tie(0);cout.tie(0);
+
+ int n, m;
+ cin >> n>> m;
+ vector<pair<int, pair<int,int>>> edges;
+ for (int i = 0; i < m; ++i)
+ {
+ 	int u, v, w;
+ 	cin >> u >> v >> w;
+
+ 	edges.push_back({w, {u,v}});
+ }
+ sort(edges.begin(), edges.end());
+
+ for (int i = 1; i <= n; ++i)
+ {
+ 	make(i);
+ }
+ int ans = 0;
+ for(auto edge : edges){
+ 	int wt = edge.first;
+ 	int u, v  = edge.second.first, edge.second.second;
+ 	if (find(u) == find(v)) continue;
+ 	Union(u,v);
+ 	ans += wt;
+ }
+ 
+ return 0;
+}
+```
+
+### ep 88 MST hard question
+
+cf 1245D:
+
+
+**NOTE : CODE HAS BUGS THAT NEED FIXING**
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+const int N = 2e3 + 10;
+int parent[N];
+int siz[N];
+multiset<int> sizes;
+void make(int v){
+	parent[v] = v; //make it independent node
+	siz[v] = 1;
+	sizes.insert(1);
+}
+int find(int v){
+	if (parent[v] == v){
+		return v;
+	}
+	return parent[v] = find(parent[v]); //path compression
+}
+
+void merge(int a, int b){ //used for handling multiset changes
+	sizes.erase(sizes.find(siz[a]));
+	sizes.erase(sizes.find(siz[b]));
+
+	sizes.insert(siz[a] + siz[b]);
+}
+void Union(int a, int b){
+	a = find(a); //replacing a as root a
+	b = find(b);
+	if (a != b){
+		if (siz[a] < siz[b]){
+			swap(a, b);
+		}
+		parent[b] = a; // this ensures smaller tree is added to bigger one
+		merge(a, b);
+		siz[a] += siz[b];
+	}
+}
+
+signed main(){
+ ios_base::sync_with_stdio(0);
+ cin.tie(0);cout.tie(0);
+
+ int n;
+ cin >> n;
+ vector<pair<int, int>> cities(n+1);
+
+ for (int i = 1; i <= n; ++i)
+ {
+ 	cin >> cities[i].first >> cities[i].second;
+ }
+
+ vector<int> k(n+1), c(n+1);
+
+ for (int i = 1; i <= n; ++i)
+ {
+ 	cin >> k[i];
+ }
+ for (int i = 1; i <= n; ++i)
+ {
+ 	cin >> c[i];
+ }
+ vector<pair<long long, pair<int,int>>> edges;
+ for (int i = 1; i <= n; ++i)
+ {
+ 	edges.push_back({c[i], {0, i}});
+ }
+
+for (int i = 1; i <= n; ++i)
+{
+	for (int j = i+1; j <= n; ++j)
+	{
+		long long dist = abs(cities[i].first - cities[j].first) + abs(cities[i].second - cities[j].second );
+		long long wt = (k[i] + k[j]) * dist;
+		edges.push_back({wt, {i,j}});
+	}
+}
+
+ sort(edges.begin(), edges.end());
+
+ for (int i = 0; i <= n; ++i)
+ {
+ 	make(i);
+ }
+ vector<int> power_stations;
+ vector<pair<int,int>> wires;
+
+ long long ans = 0;
+ for(auto edge : edges){
+ 	int wt = edge.first;
+ 	int u  = edge.second.first;
+ 	int v = edge.second.second;
+ 	if (find(u) == find(v)) continue;
+
+ 	if (u == 0 || v == 0){
+ 		power_stations.push_back(max(u,v));
+ 	}
+ 	else{
+ 		wires.push_back({u,v});
+ 	}
+ 	Union(u,v);
+ 	ans += wt;
+ }
+ cout << ans << endl;
+ cout << power_stations.size() << endl;
+ for (auto el : power_stations){
+ 	cout << el << " ";
+ }
+ cout << endl;
+ cout << wires.size() << endl;
+
+ for (auto &e : wires){
+ 	cout << e.first << " " << e.second << endl ;
+ }
+ 
+ return 0;
+}
+
+```
+
+### EP 89 info about dp 
+
+dp is almost negligible theory and its almost entirely about problems. make sure to have good recursion skills andd thats it sir will tell u how to think about dp in problems.
+
+### ep 90 intro to DP
+
+consider the problem of computing fibonacci seq:
+![fig ex 90](image-30.png)
+
+the complexity of this is 2^n, dp usually comes in recursion problems that need optimisation. now notice how in the recursion tree some values like F(3),F(2) are computed multiple times. this can be avoided if u store the value once they are computed then use it directly this we way we can have max of N calls only so for O(1) individual call total complexity would be O(N) 
+
+so we use an array (usually called dp) to store the remembered values
+
+```cpp
+
+#include<bits/stdc++.h>
+using namespace std;
+const int N = 2e3 + 10;
+
+int dp[N];
+// this approach is called top down approach (usually recursive)
+int fib(int n){
+	if (n == 0) return 0;
+	if (n == 1) return 1;
+	if (dp[n] != -1) return dp[n];
+	// above condtion is called memoisation
+	return dp[n] = fib(n-1) + fib(n-2);
+}
+signed main(){
+ memset(dp, -1, sizeof(dp)); //shortcut for filling values with -1 (for loop would be fine too)
+ ios_base::sync_with_stdio(0);
+ cin.tie(0);cout.tie(0);
+ int n;
+ cin >> n;
+
+ // bottom up approach (usually iterative)
+ dp[0] = 0;
+ dp[1] = 1;
+ for (int i = 2; i <= n; ++i)
+ {
+ 	dp[i] = dp[i-1] + dp[i-2];
+ }
+
+ return 0;
+}
+
+```
+it might look lke bottom up approach is easier, but bhaiya generally try to use top down approach.
+**thought process for top down:**
+if u think a prob might be of dp, first write brute force recursion then write the dp lines (involving dp array).
+
+### ep 91 frog 1 and 2 dp
+
+Q1 https://atcoder.jp/contests/dp/tasks/dp_a
+
+again we first write a brute force recursion then solve it using top down approach :
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+const int N = 1e5 + 10;
+
+
+int dp[N];
+
+int h[N];
+
+int func(int i){ // outputs min cost to reach i
+	// we can either come form i-1 or come from i-2
+	int cost = INT_MAX;
+	if (dp[i] != -1) return dp[i];
+	if (i == 0) return 0;
+
+	//coming from i-1
+
+	cost = min(cost, func(i-1) + abs(h[i] - h[i-1]));
+
+	// coming from i-2
+	if (i > 1){
+		cost = min(cost, func(i-2) + abs(h[i] - h[i-2]));
+	}
+	return dp[i] = cost;
+	
+}
+signed main(){
+ memset(dp, -1, sizeof(dp)); 
+ ios_base::sync_with_stdio(0);
+ cin.tie(0);cout.tie(0);
+ int n;
+ cin >> n;
+ for (int i = 0; i < n; ++i)
+ {
+ 	cin >> h[i];
+ }
+
+ cout << func(n-1);
+
+
+ return 0;
+}
+```
+
+**HW:** solve this using bottom up approach
+
+Q2 : frog 2
+
+```cpp
+
+#include<bits/stdc++.h>
+using namespace std;
+const int N = 1e5 + 10;
+
+
+int dp[N];
+int k;
+
+int h[N];
+
+int func(int i){ // outputs min cost to reach i
+	// we can either come form i-1 or come from i-2
+	int cost = INT_MAX;
+	if (dp[i] != -1) return dp[i];
+	if (i == 0) return 0;
+
+	for (int j = 1; j <= k; ++j)
+	{
+		if (i-j >= 0){
+			cost = min(cost, func(i-j) + abs(h[i] - h[i-j]));
+		}
+		
+	}
+	return dp[i] = cost;
+	
+}
+signed main(){
+ memset(dp, -1, sizeof(dp)); 
+ ios_base::sync_with_stdio(0);
+ cin.tie(0);cout.tie(0);
+ int n;
+ cin >> n >> k;
+ for (int i = 0; i < n; ++i)
+ {
+ 	cin >> h[i];
+ }
+
+ cout << func(n-1);
+
+
+ return 0;
+}
+
+```
+### EP 92 Longest increasing sequence
+
+again let us write a brute force recursion for the problem then add dp to it:
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+const int N = 1e5 + 10;
+
+
+int dp[N];
+
+
+int a[N];
+
+int func(int i){
+	if (dp[i] != -1) return dp[i];
+	int ans = 1;
+	for (int j = 0; j < i; ++j) // notice how base case is alraedy taken care of
+	{
+		if (a[j] < a[i]){
+			ans = max(ans, func(j) + 1);
+		}
+	}
+	return dp[i] = ans;
+} // time complexity of this is roughly O(N^2) due to inner loop running N times
+
+signed main(){
+ memset(dp, -1, sizeof(dp)); 
+ ios_base::sync_with_stdio(0);
+ cin.tie(0);cout.tie(0);
+ int n;
+ cin >> n;
+ for (int i = 0; i < n; ++i)
+ {
+ 	cin >> a[i];
+ }
+
+ // cout << func(n-1); this is wrong see what func really is 
+ func(n-1);
+ int ans = 1;
+ for (int i = 0; i < n; ++i)
+ {
+ 	ans = max(ans, dp[i]);
+ }
+ cout << ans;
+ return 0;
+}
+
+```
+
+**submit this to leetcode after some modifications**
+
+### ep 93 coin change 1 and 2
+
+leetcode : coin change
+
+same approach as usual 
+
+```cpp
+
+#include<bits/stdc++.h>
+using namespace std;
+const int N = 1e4 + 10;
+
+
+int dp[N];
+
+
+int func(int amount, vector<int>& coins){
+	if (dp[amount] != -1) return dp[amount];
+	if (amount == 0) return 0;
+
+	int ans = INT_MAX;
+
+	for (coin : coins){
+		if (amount - coin >= 0)
+			ans = min(ans + 0LL, func(amount-coin, coins) + 1LL);
+	}
+	return dp[amount] = ans;
+}
+
+int coinChange(vector<int>& coins, int amount) {
+	memset(dp, -1, sizeof(dp));
+	int ans = func(amount);
+
+	return ans == INT_MAX : -1 ? ans;
+}
+signed main(){
+ memset(dp, -1, sizeof(dp)); 
+ ios_base::sync_with_stdio(0);
+ cin.tie(0);cout.tie(0);
+ int n;
+ cin >> n;
+ for (int i = 0; i < n; ++i)
+ {
+ 	cin >> a[i];
+ }
+
+
+ return 0;
+}
+
+```
+
+
+now we move to coin change 2 which covers a very imp concept of multicounting due to permutations being same, so we need to make sure we first finish all 1s, then all 2s and so on. now here we will require another state variable to take into account what denomination are we on
+
+our new recursion tree looks like this : ![fig coin change 2 ](image-31.png)\
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+int dp[310][10010];
+
+
+int func(int ind, int amount, vector<int>& coins){
+	if (dp[ind][amount] != -1) return dp[ind][amount];
+	if (amount == 0) return 0;
+
+	int ways = 0;
+	for (coin_amt = 0; coin_amt < amount; coin_amt += coins[ind]){
+		ways += func(ind-1, amount-coin_amt, coins);
+	}
+	
+	return dp[ind][amount] = ans;
+}
+//physically func(ind, amount) is no of ways u can form amount using coin index from start to ind
+
+int coinChange(vector<int>& coins, int amount) {
+	memset(dp, -1, sizeof(dp));
+	int ans = func(coins.size()-1, amount, coins);
+
+	return ans;
+}
+signed main(){
+ memset(dp, -1, sizeof(dp)); 
+ ios_base::sync_with_stdio(0);
+ cin.tie(0);cout.tie(0);
+ int n;
+ cin >> n;
+ for (int i = 0; i < n; ++i)
+ {
+ 	cin >> a[i];
+ }
+
+
+ return 0;
+}
+
+```
